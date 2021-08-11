@@ -14,11 +14,11 @@ def scrape():
     mars_dict ={}
 
     # Mars News URL of page to be scraped
-    news_url = 'https://mars.nasa.gov/news/'
-    browser.visit(news_url)
+    MarsNews_url = 'https://mars.nasa.gov/news/'
+    browser.visit(MarsNews_url)
     html = browser.html
     news_soup = BeautifulSoup(html, 'html.parser')
-    # Retrieve the latest news title and paragraph
+   # Save Most Recent Article and Title 
     news_title = news_soup.find_all('div', class_='content_title')[0].text
     news_p = news_soup.find_all('div', class_='article_teaser_body')[0].text
 
