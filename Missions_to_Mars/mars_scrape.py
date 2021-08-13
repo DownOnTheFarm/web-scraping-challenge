@@ -19,8 +19,8 @@ def scrape():
     html = browser.html
     news_soup = BeautifulSoup(html, 'html.parser')
    # Save Most Recent Article and Title 
-    news_title = news_soup.find_all('div', class_='content_title')[0].text
-    news_p = news_soup.find_all('div', class_='article_teaser_body')[0].text
+    news_title = news_soup.find_all('div', class_='content_title').text
+    news_p = news_soup.find_all('div', class_='article_teaser_body').text
 
     # Mars Image to be scraped
     base_url = 'https://spaceimages-mars.com/'
@@ -28,17 +28,63 @@ def scrape():
     browser.visit(featured_image_url)
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
-
-    print(featured_image_url)
     
-
-
     # Scrape Facts and Return Table in HTML
     facts_url = 'https://galaxyfacts-mars.com/'
     tables = pd.read_html(facts_url)
-    mars_facts_df = tables[2]
-    mars_facts_df.columns = ["Profile", "Value"]
-    mars_html_table = mars_facts_df.to_html()
-    mars_html_table.replace('\n', '')
+    facts_df = tables[1]
+    facts_df.columns = ["Profile", "Value"]
+    facts_df['Profile'] = facts_df['Profile'].str.replace(':', '')
+    facts_html = facts_df.to_html()
     
+    # Scrape Mars hemisphere title and image
+    hemi_url='https://marshemispheres.com/'
+    browser.visit(hemi_url)
+    html=browser.html
+    soup=bs(html,'html.parser')
+
+    items = soup.find_all('div', class_='item')
+
+    urls = []
+    titles = []
+    hemisphere_image_urls=[]
+    for item in items:
+        # Error handling
+        try:
+            # Extract title
+            hem=item.find('div',class_='description')
+            title=hem.h3.text
+            # Extract image url
+            hem_url=hem.a['href']
+            browser.visit(hemi_url+hem_url)
+            html=browser.html
+            soup=bs(html,'html.parser')
+            image_src=soup.find('li').a['href']
+            if (title and image_src):
+                # Print results
+                print('-'*50)
+                print(title)
+                print(image_src)
+            # Create dictionary for title and url
+            hem_dict={
+                'title':title,
+                'image_url':hemi_url + image_src
+            }
+            hemisphere_image_urls.append(hem_dict)
+        except Exception as e:
+            print(e)
+    print(hemisphere_image_urls)
+    titles
+    
+    # Create dictionary for all info scraped from sources above
+    mars_dict={
+        "news_title":news_title,
+        "news_p":news_p,
+        "featured_image_url":featured_image_url,
+        "fact_table":facts_html,
+        "hemisphere_images":hemisphere_image_urls
+    }
+    # Close the browser after scraping
+    browser.quit()
+    return mars_dict
     
