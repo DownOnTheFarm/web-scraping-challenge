@@ -1,33 +1,40 @@
-from splinter import Browser
-from bs4 import BeautifulSoup
-import pandas as pd
+# Dependencies
+from bs4 import BeautifulSoup as bs
 import requests
 import pymongo
+from splinter import Browser
+from flask import Flask, render_template, redirect
+from flask_pymongo import PyMongo
+import pandas as pd
 
 def init_browser():
-    # @NOTE: Replace the path with your actual path to the chromedriver
     executable_path = {"executable_path": "chromedriver.exe"}
     return Browser("chrome", **executable_path, headless=False)
 
 def scrape():
     browser = init_browser()
-    mars_dict ={}
-
+    
     # Mars News URL of page to be scraped
     MarsNews_url = 'https://mars.nasa.gov/news/'
     browser.visit(MarsNews_url)
     html = browser.html
-    news_soup = BeautifulSoup(html, 'html.parser')
-   # Save Most Recent Article and Title 
-    news_title = news_soup.find_all('div', class_='content_title').text
-    news_p = news_soup.find_all('div', class_='article_teaser_body').text
+    soup = bs(html, 'html.parser')
+    # Save Most Recent Article and Title 
+    slidebar = soup.find('li', class_='slide')
+    categories = slidebar.find_all('div', class_='content_title')
+    for category in categories:
+        news_title = category.text.strip()
+    slidebar = soup.find('li', class_='slide')
+    categories = slidebar.find_all('div', class_='article_teaser_body')
+    for category in categories:
+        news_p = category.text.strip()
 
     # Mars Image to be scraped
     base_url = 'https://spaceimages-mars.com/'
     featured_image_url = base_url + 'image/featured/mars1.jpg'
     browser.visit(featured_image_url)
     html = browser.html
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = bs(html, 'html.parser')
     
     # Scrape Facts and Return Table in HTML
     facts_url = 'https://galaxyfacts-mars.com/'
@@ -45,7 +52,6 @@ def scrape():
 
     items = soup.find_all('div', class_='item')
 
-    urls = []
     titles = []
     hemisphere_image_urls=[]
     for item in items:
